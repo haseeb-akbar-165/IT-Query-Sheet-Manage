@@ -4,6 +4,7 @@
   <base target="_top">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * { box-sizing: border-box; }
     html, body {
@@ -135,6 +136,7 @@
       gap: 8px;
       margin-bottom: 28px;
       border-bottom: 1.5px solid #e2e5ee;
+      flex-wrap: wrap;
     }
     .tab-btn {
       padding: 12px 20px;
@@ -152,7 +154,7 @@
     .tab-btn:hover { color: #4b5063; }
     .tab-btn.active { color: #4f46e5; border-color: #4f46e5; }
 
-    .view { display: none; max-width: 620px; }
+    .view { display: none; max-width: 720px; }
     .view.active { display: block; }
 
     label {
@@ -166,7 +168,7 @@
       margin-top: 26px;
     }
     label:first-of-type { margin-top: 0; }
-    textarea, select {
+    textarea, select, input {
       width: 100%;
       padding: 16px 16px;
       font-size: 16px;
@@ -183,7 +185,7 @@
       resize: vertical;
       line-height: 1.55;
     }
-    textarea:focus, select:focus {
+    textarea:focus, select:focus, input:focus {
       border-color: #6366f1;
       box-shadow: 0 0 0 4px rgba(99,102,241,0.12);
     }
@@ -252,16 +254,18 @@
       min-height: 16px;
     }
 
-    /* Resolve tab specifics */
+    /* Resolve / Edit tabs specifics */
     .toolbar {
       display: flex;
       gap: 12px;
       align-items: center;
+      flex-wrap: wrap;
       margin-bottom: 18px;
     }
     .toolbar label { margin: 0; }
     .toolbar select { width: auto; padding: 10px 14px; font-size: 14.5px; }
-    #refreshBtn {
+    .toolbar input { width: auto; padding: 10px 14px; font-size: 14.5px; }
+    #refreshBtn, #editRefreshBtn {
       padding: 10px 16px;
       border: 1.5px solid #e2e5ee;
       border-radius: 10px;
@@ -272,7 +276,7 @@
       color: #4b5063;
       font-family: 'Inter', Arial, sans-serif;
     }
-    #refreshBtn:hover { background: #f9fafc; }
+    #refreshBtn:hover, #editRefreshBtn:hover { background: #f9fafc; }
 
     .list {
       display: flex;
@@ -293,7 +297,7 @@
     .item:hover { border-color: #c7cbe0; }
     .item.selected { border-color: #6366f1; background: #eef0ff; }
     .item .text { font-size: 14.5px; line-height: 1.45; margin-bottom: 6px; }
-    .item .meta { font-size: 12px; color: #6b7085; display: flex; gap: 10px; align-items: center; }
+    .item .meta { font-size: 12px; color: #6b7085; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .badge {
       display: inline-block;
       padding: 3px 9px;
@@ -307,8 +311,8 @@
     .badge.assign { background: #eff6ff; color: #1d4ed8; }
     .badge.resolved { background: #ecfdf5; color: #047857; }
     .empty { color: #6b7085; font-size: 14px; padding: 24px 0; text-align: center; }
-    .resolve-panel { display: none; margin-top: 22px; }
-    #resolveBtn {
+    .resolve-panel { display: none; margin-top: 22px; padding-top: 20px; border-top: 1px solid #e2e5ee; }
+    #resolveBtn, #editSaveBtn, #undoResolveBtn, #undoEditBtn {
       margin-top: 18px;
       padding: 14px 26px;
       background: linear-gradient(135deg, #10b981, #059669);
@@ -320,8 +324,55 @@
       font-family: 'Inter', Arial, sans-serif;
       cursor: pointer;
       box-shadow: 0 8px 18px rgba(5,150,105,0.25);
+      margin-right: 10px;
     }
-    #resolveBtn:disabled { background: #d3d5e0; box-shadow: none; cursor: not-allowed; }
+    #resolveBtn:disabled, #editSaveBtn:disabled { background: #d3d5e0; box-shadow: none; cursor: not-allowed; }
+    .btn-secondary {
+      background: #e2e5ee !important;
+      color: #4b5063 !important;
+      box-shadow: none !important;
+    }
+    .btn-secondary:hover { background: #d3d5e0 !important; }
+
+    /* Spinner */
+    .spinner {
+      border: 4px solid #e2e5ee;
+      border-top: 4px solid #4f46e5;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Dashboard chart container */
+    .chart-container {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    /* Admin panel */
+    .admin-panel {
+      background: #fafafa;
+      border: 1px solid #e2e5ee;
+      border-radius: 14px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    .admin-panel textarea {
+      height: 120px;
+    }
+    #saveNamesBtn {
+      margin-top: 12px;
+    }
+    #adminMsg {
+      margin-top: 10px;
+      color: #6b7085;
+    }
   </style>
 </head>
 <body>
@@ -346,11 +397,13 @@
   <div class="form-panel">
     <div class="tabs">
       <button type="button" class="tab-btn active" data-tab="new">New Query</button>
-      <button type="button" class="tab-btn" data-tab="resolve">Resolve Existing</button>
-      <button type="button" class="tab-btn" data-tab="edit">Edit Existing</button>
+      <button type="button" class="tab-btn" data-tab="resolve">Resolve</button>
+      <button type="button" class="tab-btn" data-tab="edit">Edit</button>
+      <button type="button" class="tab-btn" data-tab="dashboard">Dashboard</button>
+      <button type="button" class="tab-btn" id="adminTabBtn" data-tab="admin" style="display:none;">Admin</button>
     </div>
 
-    <!-- ===================== NEW QUERY TAB ===================== -->
+    <!-- ============ NEW QUERY TAB ============ -->
     <div id="view-new" class="view active">
       <div id="step1">
         <label for="queryText">Query</label>
@@ -374,71 +427,187 @@
       <div id="msg"></div>
     </div>
 
-    <!-- ===================== RESOLVE TAB ===================== -->
+    <!-- ============ RESOLVE TAB ============ -->
     <div id="view-resolve" class="view">
       <div class="toolbar">
         <label for="sheetSelect">Tab</label>
         <select id="sheetSelect"></select>
         <label for="resolveDateSelect">Date</label>
         <select id="resolveDateSelect"><option value="">All dates</option></select>
+        <label for="resolveNameFilter">Resolved by</label>
+        <select id="resolveNameFilter"><option value="">All</option></select>
         <button id="refreshBtn" type="button">↻ Refresh</button>
       </div>
 
-      <div id="list" class="list"></div>
+      <div id="resolveListContainer">
+        <div id="resolveList" class="list"></div>
+      </div>
 
       <div id="resolvePanel" class="resolve-panel">
         <label for="resolveNameSelect">Resolved by</label>
         <select id="resolveNameSelect"></select>
-        <button id="resolveBtn" disabled>Mark as Query Out</button>
+        <div>
+          <button id="resolveBtn">Mark as Query Out</button>
+          <button id="undoResolveBtn" class="btn-secondary" disabled>↩ Undo resolve</button>
+        </div>
         <div id="resolveMsg"></div>
       </div>
     </div>
 
-    <!-- ===================== EDIT TAB ===================== -->
+    <!-- ============ EDIT TAB ============ -->
     <div id="view-edit" class="view">
       <div class="toolbar">
         <label for="editSheetSelect">Tab</label>
         <select id="editSheetSelect"></select>
         <label for="editDateSelect">Date</label>
         <select id="editDateSelect"><option value="">All dates</option></select>
+        <label for="editNameFilter">Resolved by</label>
+        <select id="editNameFilter"><option value="">All</option></select>
         <button id="editRefreshBtn" type="button">↻ Refresh</button>
       </div>
 
       <label for="editSearch" style="margin-top:0;">Search</label>
-      <input type="text" id="editSearch" placeholder="Type to filter queries on this tab..."
-        style="width:100%; padding:14px 16px; font-size:15px; font-family:'Inter',Arial,sans-serif; border:1.5px solid #e2e5ee; border-radius:12px; outline:none; margin-bottom:16px;">
+      <input type="text" id="editSearch" placeholder="Type to filter queries...">
 
-      <div id="editList" class="list"></div>
+      <div id="editListContainer">
+        <div id="editList" class="list"></div>
+        <button id="loadMoreBtn" style="display:none; margin-top:12px; padding:10px; width:100%; background:#f0f2f5; border:1px solid #e2e5ee; border-radius:10px; cursor:pointer;">Load More</button>
+      </div>
 
       <div id="editPanel" class="resolve-panel">
-        <label for="editText">Query text <span style="font-weight:400; text-transform:none; color:#9aa0b3;">(date &amp; time on this row won't change)</span></label>
+        <label for="editText">Query text <span style="font-weight:400; text-transform:none; color:#9aa0b3;">(date &amp; time unchanged)</span></label>
         <textarea id="editText" style="height:120px;"></textarea>
-        <button id="editSaveBtn" disabled>Save Changes</button>
+        <label for="editStatus">Status</label>
+        <select id="editStatus">
+          <option value="pending">Pending</option>
+          <option value="assign">Assign to Dev</option>
+          <option value="out">Query Out</option>
+        </select>
+        <div>
+          <button id="editSaveBtn" disabled>Save Changes</button>
+          <button id="undoEditBtn" class="btn-secondary" disabled>↩ Undo edit</button>
+        </div>
         <div id="editMsg"></div>
+      </div>
+    </div>
+
+    <!-- ============ DASHBOARD TAB ============ -->
+    <div id="view-dashboard" class="view">
+      <div class="toolbar">
+        <label for="dashSheetSelect">Tab</label>
+        <select id="dashSheetSelect"></select>
+        <button id="dashRefreshBtn" type="button">↻ Refresh</button>
+      </div>
+      <div id="dashLoading" class="spinner" style="display:none;"></div>
+      <div id="dashContent" style="display:none;">
+        <div class="chart-container">
+          <h3>Queries per Day</h3>
+          <canvas id="dailyChart"></canvas>
+        </div>
+        <div class="chart-container" style="display:flex; gap:20px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:200px;">
+            <h3>Status Distribution</h3>
+            <canvas id="statusChart"></canvas>
+          </div>
+          <div style="flex:1; min-width:200px;">
+            <h3>Totals</h3>
+            <p><strong>Pending:</strong> <span id="dashPending">0</span></p>
+            <p><strong>Assigned:</strong> <span id="dashAssigned">0</span></p>
+            <p><strong>Resolved:</strong> <span id="dashResolved">0</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ADMIN TAB ============ -->
+    <div id="view-admin" class="view">
+      <h2>Manage Names</h2>
+      <p>Edit the list of names (one per line). These will be stored in a "Config" sheet.</p>
+      <div class="admin-panel">
+        <label for="adminNames">Names (one per line)</label>
+        <textarea id="adminNames"></textarea>
+        <button id="saveNamesBtn">Save Names</button>
+        <div id="adminMsg"></div>
       </div>
     </div>
   </div>
 
   <script>
     /* ---------- API communication ---------- */
-    // *** CHANGE THIS TO YOUR WEB APP URL AFTER DEPLOYMENT ***
-    var API_BASE = 'https://script.google.com/macros/s/AKfycbxB2xNW_xBf26hmJgS73cKmne73aA6atPjwE1U-0bIdg_6nuamO-IalqN7veIDxIYRUdg/exec';
+    var API_BASE = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';  // <<-- UPDATE THIS
+    var cachedNames = null;
+    var cachedSheetNames = null;
 
     function callApi(action, data, success, error) {
-    var url = API_BASE + '?action=' + encodeURIComponent(action);
-    for (var key in data) {
+      var url = API_BASE + '?action=' + encodeURIComponent(action);
+      for (var key in data) {
         if (data.hasOwnProperty(key)) {
-            url += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
+          url += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
         }
-    }
-    fetch(url)
+      }
+      fetch(url)
         .then(response => response.json())
         .then(result => {
-            if (result.success) success(result.data);
-            else error(new Error(result.error));
+          if (result.success) success(result.data);
+          else error(new Error(result.error));
         })
         .catch(err => error(err));
-}
+    }
+
+    // Cache names and sheet names on load
+    function loadCache() {
+      callApi('getNames', {}, function(names) {
+        cachedNames = names;
+        populateNameDropdowns(names);
+        if (document.getElementById('adminTabBtn').style.display !== 'none') {
+          document.getElementById('adminNames').value = names.join('\n');
+        }
+      }, function(e) { console.warn('Failed to load names:', e); });
+
+      callApi('getAllSheetNames', {}, function(sheets) {
+        cachedSheetNames = sheets;
+        populateSheetDropdowns(sheets);
+      }, function(e) { console.warn('Failed to load sheet names:', e); });
+    }
+
+    function populateNameDropdowns(names) {
+      var selects = ['nameSelect', 'resolveNameSelect', 'resolveNameFilter', 'editNameFilter'];
+      selects.forEach(function(id) {
+        var sel = document.getElementById(id);
+        if (!sel) return;
+        var currentVal = sel.value;
+        sel.innerHTML = '';
+        var placeholder = document.createElement('option');
+        placeholder.textContent = (id === 'resolveNameFilter' || id === 'editNameFilter') ? 'All' : 'Select name...';
+        placeholder.value = '';
+        sel.appendChild(placeholder);
+        names.forEach(function(n) {
+          var opt = document.createElement('option');
+          opt.value = n;
+          opt.textContent = n;
+          sel.appendChild(opt);
+        });
+        if (currentVal && names.indexOf(currentVal) !== -1) sel.value = currentVal;
+      });
+    }
+
+    function populateSheetDropdowns(sheets) {
+      var selects = ['sheetSelect', 'editSheetSelect', 'dashSheetSelect'];
+      selects.forEach(function(id) {
+        var sel = document.getElementById(id);
+        if (!sel) return;
+        var currentVal = sel.value;
+        sel.innerHTML = '';
+        sheets.forEach(function(s) {
+          var opt = document.createElement('option');
+          opt.value = s;
+          opt.textContent = s;
+          sel.appendChild(opt);
+        });
+        if (currentVal && sheets.indexOf(currentVal) !== -1) sel.value = currentVal;
+        else if (sheets.length) sel.value = sheets[0];
+      });
+    }
 
     /* ---------- Tab switching ---------- */
     document.querySelectorAll('.tab-btn').forEach(function(btn) {
@@ -446,27 +615,29 @@
         document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
         document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
         btn.classList.add('active');
-        document.getElementById('view-' + btn.getAttribute('data-tab')).classList.add('active');
-        if (btn.getAttribute('data-tab') === 'resolve' && !resolveLoadedOnce) {
-          initResolveTab();
-        }
-        if (btn.getAttribute('data-tab') === 'edit' && !editLoadedOnce) {
-          initEditTab();
-        }
+        var tab = btn.getAttribute('data-tab');
+        document.getElementById('view-' + tab).classList.add('active');
+        if (tab === 'resolve' && !resolveLoadedOnce) initResolveTab();
+        if (tab === 'edit' && !editLoadedOnce) initEditTab();
+        if (tab === 'dashboard' && !dashLoadedOnce) initDashboardTab();
+        if (tab === 'admin') loadAdminPanel();
       });
     });
 
     document.getElementById('todayLabel').textContent =
       new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-    /* ================= NEW QUERY TAB LOGIC ================= */
+    // Show admin tab only to owner (check by session – we'll just show it if user is owner)
+    // The backend will enforce owner checks; we'll show the tab always but backend denies if not owner.
+    document.getElementById('adminTabBtn').style.display = 'block';
+
+    /* ================= NEW QUERY TAB ================= */
     var selectedStatus = null;
+    var lastSavedRow = null;
 
     document.querySelectorAll('.status-options button').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        document.querySelectorAll('.status-options button').forEach(function(b) {
-          b.classList.remove('selected');
-        });
+        document.querySelectorAll('.status-options button').forEach(function(b) { b.classList.remove('selected'); });
         btn.classList.add('selected');
         selectedStatus = btn.getAttribute('data-value');
         document.getElementById('step2').style.display = (selectedStatus === 'out') ? 'block' : 'none';
@@ -479,83 +650,44 @@
 
     function checkReady() {
       var text = document.getElementById('queryText').value.trim();
-      if (!text || !selectedStatus) {
-        document.getElementById('saveBtn').disabled = true;
-        return;
-      }
+      if (!text || !selectedStatus) { document.getElementById('saveBtn').disabled = true; return; }
       if (selectedStatus === 'out') {
-        var name = document.getElementById('nameSelect').value;
-        document.getElementById('saveBtn').disabled = !name;
+        document.getElementById('saveBtn').disabled = !document.getElementById('nameSelect').value;
       } else {
         document.getElementById('saveBtn').disabled = false;
       }
     }
 
-    // Load names into New Query dropdown
-    callApi('getNames', {}, function(names) {
-      var sel = document.getElementById('nameSelect');
-      var placeholder = document.createElement('option');
-      placeholder.textContent = 'Select name...';
-      placeholder.value = '';
-      sel.appendChild(placeholder);
-      names.forEach(function(n) {
-        var opt = document.createElement('option');
-        opt.value = n;
-        opt.textContent = n;
-        sel.appendChild(opt);
-      });
-    }, function(error) {
-      console.error('Failed to load names:', error);
-      document.getElementById('msg').textContent = 'Error loading names: ' + error.message;
-    });
+    // Initial loads
+    loadCache();
 
-    // Load today's running totals on open
-    callApi('getTodayStats', {}, function(stats) {
-      updateStats(stats);
-    }, function(error) {
-      console.error('Failed to load stats:', error);
-    });
-
-    // Show which tab entries will actually save to
+    callApi('getTodayStats', {}, function(stats) { updateStats(stats); }, function(e) { console.warn(e); });
     callApi('getTargetSheetInfo', {}, function(info) {
       var label = document.getElementById('targetSheetLabel');
-      if (info.found) {
-        label.textContent = 'Saving to tab: "' + info.name + '"';
-      } else {
-        label.innerHTML = '⚠ No tab found for "' + info.name + '" — create it to enable saving.';
-        label.style.color = '#fecaca';
-      }
-    }, function(error) {
-      console.error('Failed to get target sheet info:', error);
-    });
+      if (info.found) label.textContent = 'Saving to tab: "' + info.name + '"';
+      else { label.innerHTML = '⚠ No tab found for "' + info.name + '" — create it.'; label.style.color = '#fecaca'; }
+    }, function(e) { console.warn(e); });
 
-    var lastSavedRow = null;
+    // Auto-refresh stats every 10 seconds
+    setInterval(function() {
+      callApi('getTodayStats', {}, function(stats) { updateStats(stats); }, function() {});
+    }, 10000);
 
     document.getElementById('saveBtn').addEventListener('click', attemptSave);
 
     function attemptSave() {
       if (document.getElementById('saveBtn').disabled) return;
       var text = document.getElementById('queryText').value.trim();
-
       document.getElementById('saveBtn').disabled = true;
       document.getElementById('msg').textContent = 'Checking...';
-
-      // Check duplicate
       callApi('checkDuplicateToday', { queryText: text }, function(isDuplicate) {
-        if (isDuplicate) {
-          var proceed = confirm('This query looks like it was already logged today. Save it again anyway?');
-          if (!proceed) {
-            document.getElementById('msg').textContent = '';
-            document.getElementById('saveBtn').disabled = false;
-            return;
-          }
+        if (isDuplicate && !confirm('Duplicate today. Save again?')) {
+          document.getElementById('msg').textContent = '';
+          document.getElementById('saveBtn').disabled = false;
+          return;
         }
         doSave();
-      }, function(error) {
-        // If duplicate check fails, proceed anyway
-        console.warn('Duplicate check failed, saving anyway:', error);
-        doSave();
-      });
+      }, function() { doSave(); });
     }
 
     function doSave() {
@@ -565,9 +697,8 @@
         name: document.getElementById('nameSelect').value
       };
       document.getElementById('msg').textContent = 'Saving...';
-
       callApi('saveQueryEntry', data, function(result) {
-        document.getElementById('msg').textContent = '✅ ' + result.message + ' — ready for next entry';
+        document.getElementById('msg').textContent = '✅ ' + result.message;
         lastSavedRow = result.row;
         updateStats(result.stats);
         document.getElementById('undoBtn').style.display = 'block';
@@ -583,7 +714,6 @@
       if (!lastSavedRow) return;
       document.getElementById('undoBtn').disabled = true;
       document.getElementById('msg').textContent = 'Undoing...';
-
       callApi('undoLastEntry', { rowNumber: lastSavedRow }, function(stats) {
         document.getElementById('msg').textContent = 'Last entry removed.';
         updateStats(stats);
@@ -605,59 +735,53 @@
       document.getElementById('queryText').value = '';
       document.getElementById('nameSelect').value = '';
       selectedStatus = null;
-      document.querySelectorAll('.status-options button').forEach(function(b) {
-        b.classList.remove('selected');
-      });
+      document.querySelectorAll('.status-options button').forEach(function(b) { b.classList.remove('selected'); });
       document.getElementById('step2').style.display = 'none';
       document.getElementById('saveBtn').disabled = true;
       document.getElementById('queryText').focus();
     }
 
-    /* ================= RESOLVE TAB LOGIC ================= */
+    /* ================= RESOLVE TAB ================= */
     var resolveLoadedOnce = false;
-    var selectedRow = null;
-    var currentSheetName = null;
+    var selectedResolveRow = null;
+    var currentResolveSheet = null;
+    var resolveUndoData = null; // for undo resolve
 
     function initResolveTab() {
       resolveLoadedOnce = true;
-
-      callApi('getAllSheetNames', {}, function(names) {
-        var sel = document.getElementById('sheetSelect');
-        names.forEach(function(n) {
-          var opt = document.createElement('option');
-          opt.value = n;
-          opt.textContent = n;
-          sel.appendChild(opt);
-        });
-        if (names.length) {
-          currentSheetName = names[0];
+      var sheetSel = document.getElementById('sheetSelect');
+      if (cachedSheetNames) {
+        populateSheetDropdowns(cachedSheetNames);
+        currentResolveSheet = sheetSel.value;
+      }
+      if (cachedNames) {
+        populateNameDropdowns(cachedNames);
+      }
+      // If no data yet, use callApi as fallback
+      if (!cachedSheetNames) {
+        callApi('getAllSheetNames', {}, function(sheets) {
+          cachedSheetNames = sheets;
+          populateSheetDropdowns(sheets);
+          currentResolveSheet = sheets[0] || '';
           loadResolveDates();
           loadOpenQueries();
-        }
-      }, function(error) {
-        console.error('Failed to load sheet names:', error);
-      });
-
-      callApi('getNames', {}, function(names) {
-        var sel = document.getElementById('resolveNameSelect');
-        var placeholder = document.createElement('option');
-        placeholder.textContent = 'Select name...';
-        placeholder.value = '';
-        sel.appendChild(placeholder);
-        names.forEach(function(n) {
-          var opt = document.createElement('option');
-          opt.value = n;
-          opt.textContent = n;
-          sel.appendChild(opt);
         });
-      }, function(error) {
-        console.error('Failed to load names:', error);
-      });
+      } else {
+        loadResolveDates();
+        loadOpenQueries();
+      }
+      if (!cachedNames) {
+        callApi('getNames', {}, function(names) {
+          cachedNames = names;
+          populateNameDropdowns(names);
+        });
+      }
     }
 
     document.getElementById('sheetSelect').addEventListener('change', function() {
-      currentSheetName = this.value;
+      currentResolveSheet = this.value;
       document.getElementById('resolveDateSelect').value = '';
+      document.getElementById('resolveNameFilter').value = '';
       loadResolveDates();
       loadOpenQueries();
     });
@@ -666,41 +790,49 @@
       loadOpenQueries();
     });
     document.getElementById('resolveDateSelect').addEventListener('change', loadOpenQueries);
+    document.getElementById('resolveNameFilter').addEventListener('change', loadOpenQueries);
     document.getElementById('resolveNameSelect').addEventListener('change', checkResolveReady);
 
     function loadResolveDates() {
       var sel = document.getElementById('resolveDateSelect');
-      callApi('getDatesForSheet', { sheetName: currentSheetName }, function(dates) {
+      callApi('getDatesForSheet', { sheetName: currentResolveSheet }, function(dates) {
         var current = sel.value;
         sel.innerHTML = '<option value="">All dates</option>';
         dates.forEach(function(d) {
           var opt = document.createElement('option');
-          opt.value = d;
-          opt.textContent = d;
+          opt.value = d; opt.textContent = d;
           sel.appendChild(opt);
         });
         if (dates.indexOf(current) !== -1) sel.value = current;
-      }, function(error) {
-        console.error('Failed to load dates:', error);
-      });
+      }, function(e) { console.warn(e); });
     }
 
     function loadOpenQueries() {
-      document.getElementById('list').innerHTML = '<div class="empty">Loading…</div>';
+      var container = document.getElementById('resolveListContainer');
+      container.innerHTML = '<div class="spinner"></div>';
       resetResolveSelection();
       var dateFilter = document.getElementById('resolveDateSelect').value;
-      callApi('getOpenQueries', { sheetName: currentSheetName, dateFilter: dateFilter }, function(items) {
-        renderList(items);
+      var nameFilter = document.getElementById('resolveNameFilter').value;
+      callApi('getOpenQueries', {
+        sheetName: currentResolveSheet,
+        dateFilter: dateFilter,
+        nameFilter: nameFilter
+      }, function(items) {
+        container.innerHTML = '';
+        var list = document.createElement('div');
+        list.className = 'list';
+        list.id = 'resolveList';
+        renderResolveList(items, list);
+        container.appendChild(list);
       }, function(error) {
-        document.getElementById('list').innerHTML = '<div class="empty">Error: ' + error.message + '</div>';
+        container.innerHTML = '<div class="empty">Error: ' + error.message + '</div>';
       });
     }
 
-    function renderList(items) {
-      var list = document.getElementById('list');
+    function renderResolveList(items, list) {
       list.innerHTML = '';
       if (!items.length) {
-        list.innerHTML = '<div class="empty">No open Pending / Assign-to-Dev queries on this tab 🎉</div>';
+        list.innerHTML = '<div class="empty">No open queries 🎉</div>';
         return;
       }
       items.forEach(function(item) {
@@ -708,18 +840,20 @@
         var el = document.createElement('div');
         el.className = 'item';
         el.innerHTML =
-          '<div class="text"></div>' +
-          '<div class="meta">' +
-            '<span class="badge ' + badgeClass + '"></span>' +
-            '<span class="dateTime"></span>' +
+          '<div class="text"></div><div class="meta">' +
+          '<span class="badge ' + badgeClass + '"></span>' +
+          '<span class="dateTime"></span>' +
+          (item.resolvedBy ? '<span>By: ' + item.resolvedBy + '</span>' : '') +
           '</div>';
         el.querySelector('.text').textContent = item.text;
         el.querySelector('.badge').textContent = item.status;
         el.querySelector('.dateTime').textContent = item.date + (item.time ? '  ·  ' + item.time : '');
         el.addEventListener('click', function() {
-          document.querySelectorAll('#list .item').forEach(function(i) { i.classList.remove('selected'); });
+          document.querySelectorAll('#resolveList .item').forEach(function(i) { i.classList.remove('selected'); });
           el.classList.add('selected');
-          selectedRow = item.row;
+          selectedResolveRow = item.row;
+          // store original data for undo
+          resolveUndoData = { row: item.row, pending: item.status === 'Pending' ? item.text : '', assign: item.status === 'Assign to Dev' ? item.text : '' };
           document.getElementById('resolvePanel').style.display = 'block';
           checkResolveReady();
         });
@@ -728,132 +862,205 @@
     }
 
     function resetResolveSelection() {
-      selectedRow = null;
+      selectedResolveRow = null;
+      resolveUndoData = null;
       document.getElementById('resolvePanel').style.display = 'none';
       document.getElementById('resolveMsg').textContent = '';
+      document.getElementById('undoResolveBtn').disabled = true;
     }
 
     function checkResolveReady() {
       var name = document.getElementById('resolveNameSelect').value;
-      document.getElementById('resolveBtn').disabled = !(selectedRow && name);
+      document.getElementById('resolveBtn').disabled = !(selectedResolveRow && name);
     }
 
     document.getElementById('resolveBtn').addEventListener('click', function() {
       var name = document.getElementById('resolveNameSelect').value;
-      if (!selectedRow || !name) return;
-
+      if (!selectedResolveRow || !name) return;
       document.getElementById('resolveBtn').disabled = true;
       document.getElementById('resolveMsg').textContent = 'Saving...';
-
       callApi('resolveQueryEntry', {
-        sheetName: currentSheetName,
-        rowNumber: selectedRow,
+        sheetName: currentResolveSheet,
+        rowNumber: selectedResolveRow,
         name: name
       }, function(result) {
         document.getElementById('resolveMsg').textContent = '✅ ' + result.message;
+        document.getElementById('undoResolveBtn').disabled = false;
         loadOpenQueries();
-        callApi('getTodayStats', {}, function(stats) {
-          updateStats(stats);
-        }, function() {});
+        callApi('getTodayStats', {}, function(stats) { updateStats(stats); }, function() {});
       }, function(error) {
         document.getElementById('resolveMsg').textContent = 'Error: ' + error.message;
         document.getElementById('resolveBtn').disabled = false;
       });
     });
 
-    /* ================= EDIT TAB LOGIC ================= */
+    document.getElementById('undoResolveBtn').addEventListener('click', function() {
+      if (!resolveUndoData) return;
+      document.getElementById('undoResolveBtn').disabled = true;
+      document.getElementById('resolveMsg').textContent = 'Undoing resolve...';
+      callApi('restoreRow', {
+        sheetName: currentResolveSheet,
+        rowNumber: resolveUndoData.row,
+        pending: resolveUndoData.pending,
+        assign: resolveUndoData.assign,
+        out: '' // clear out
+      }, function(result) {
+        document.getElementById('resolveMsg').textContent = '✅ Undo successful.';
+        resolveUndoData = null;
+        document.getElementById('undoResolveBtn').disabled = true;
+        loadOpenQueries();
+        callApi('getTodayStats', {}, function(stats) { updateStats(stats); }, function() {});
+      }, function(error) {
+        document.getElementById('resolveMsg').textContent = 'Undo failed: ' + error.message;
+        document.getElementById('undoResolveBtn').disabled = false;
+      });
+    });
+
+    /* ================= EDIT TAB ================= */
     var editLoadedOnce = false;
     var editSelectedRow = null;
-    var editCurrentSheetName = null;
-    var editSearchTimer = null;
+    var editCurrentSheet = null;
+    var editOffset = 0;
+    var editLimit = 20;
+    var editHasMore = false;
+    var editTotalLoaded = 0;
+    var editAllItems = [];
+    var editUndoData = null;
 
     function initEditTab() {
       editLoadedOnce = true;
-
-      callApi('getAllSheetNames', {}, function(names) {
-        var sel = document.getElementById('editSheetSelect');
-        names.forEach(function(n) {
-          var opt = document.createElement('option');
-          opt.value = n;
-          opt.textContent = n;
-          sel.appendChild(opt);
-        });
-        if (names.length) {
-          editCurrentSheetName = names[0];
+      var sheetSel = document.getElementById('editSheetSelect');
+      if (cachedSheetNames) {
+        populateSheetDropdowns(cachedSheetNames);
+        editCurrentSheet = sheetSel.value;
+      }
+      if (cachedNames) {
+        populateNameDropdowns(cachedNames);
+      }
+      if (!cachedSheetNames) {
+        callApi('getAllSheetNames', {}, function(sheets) {
+          cachedSheetNames = sheets;
+          populateSheetDropdowns(sheets);
+          editCurrentSheet = sheets[0] || '';
           loadEditDates();
-          loadEditQueries();
-        }
-      }, function(error) {
-        console.error('Failed to load sheet names:', error);
-      });
+          loadEditQueries(true);
+        });
+      } else {
+        loadEditDates();
+        loadEditQueries(true);
+      }
     }
 
     document.getElementById('editSheetSelect').addEventListener('change', function() {
-      editCurrentSheetName = this.value;
+      editCurrentSheet = this.value;
       document.getElementById('editDateSelect').value = '';
+      document.getElementById('editNameFilter').value = '';
       loadEditDates();
-      loadEditQueries();
+      loadEditQueries(true);
     });
     document.getElementById('editRefreshBtn').addEventListener('click', function() {
       loadEditDates();
-      loadEditQueries();
+      loadEditQueries(true);
     });
-    document.getElementById('editDateSelect').addEventListener('change', loadEditQueries);
+    document.getElementById('editDateSelect').addEventListener('change', function() { loadEditQueries(true); });
+    document.getElementById('editNameFilter').addEventListener('change', function() { loadEditQueries(true); });
+    document.getElementById('editSearch').addEventListener('input', function() {
+      clearTimeout(editSearchTimer);
+      editSearchTimer = setTimeout(function() { loadEditQueries(true); }, 400);
+    });
+    var editSearchTimer = null;
+
+    document.getElementById('loadMoreBtn').addEventListener('click', function() {
+      if (editHasMore) loadEditQueries(false);
+    });
 
     function loadEditDates() {
       var sel = document.getElementById('editDateSelect');
-      callApi('getDatesForSheet', { sheetName: editCurrentSheetName }, function(dates) {
+      callApi('getDatesForSheet', { sheetName: editCurrentSheet }, function(dates) {
         var current = sel.value;
         sel.innerHTML = '<option value="">All dates</option>';
         dates.forEach(function(d) {
           var opt = document.createElement('option');
-          opt.value = d;
-          opt.textContent = d;
+          opt.value = d; opt.textContent = d;
           sel.appendChild(opt);
         });
         if (dates.indexOf(current) !== -1) sel.value = current;
-      }, function(error) {
-        console.error('Failed to load dates:', error);
-      });
+      }, function(e) { console.warn(e); });
     }
 
-    document.getElementById('editSearch').addEventListener('input', function() {
-      clearTimeout(editSearchTimer);
-      editSearchTimer = setTimeout(loadEditQueries, 300);
-    });
-
-    function loadEditQueries() {
-      document.getElementById('editList').innerHTML = '<div class="empty">Loading…</div>';
+    function loadEditQueries(reset) {
+      if (reset) {
+        editOffset = 0;
+        editAllItems = [];
+        editTotalLoaded = 0;
+        document.getElementById('editList').innerHTML = '';
+        document.getElementById('loadMoreBtn').style.display = 'none';
+      }
+      var container = document.getElementById('editListContainer');
+      var list = document.getElementById('editList');
+      if (reset) {
+        list.innerHTML = '<div class="spinner"></div>';
+      } else {
+        // show spinner at bottom
+        var spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        spinner.id = 'editLoadMoreSpinner';
+        container.appendChild(spinner);
+      }
       resetEditSelection();
+
       var searchText = document.getElementById('editSearch').value;
       var dateFilter = document.getElementById('editDateSelect').value;
+      var nameFilter = document.getElementById('editNameFilter').value;
+
       callApi('getQueriesForEdit', {
-        sheetName: editCurrentSheetName,
+        sheetName: editCurrentSheet,
         searchText: searchText,
-        dateFilter: dateFilter
-      }, function(items) {
-        renderEditList(items);
+        dateFilter: dateFilter,
+        nameFilter: nameFilter,
+        offset: editOffset,
+        limit: editLimit
+      }, function(result) {
+        var spinnerEl = document.getElementById('editLoadMoreSpinner');
+        if (spinnerEl) spinnerEl.remove();
+        if (reset) list.innerHTML = '';
+        var items = result.items || [];
+        editHasMore = result.hasMore || false;
+        editTotalLoaded += items.length;
+        editAllItems = editAllItems.concat(items);
+        if (reset && !items.length) {
+          list.innerHTML = '<div class="empty">No matching queries.</div>';
+          document.getElementById('loadMoreBtn').style.display = 'none';
+          return;
+        }
+        renderEditListItems(items, list, reset);
+        if (editHasMore) {
+          document.getElementById('loadMoreBtn').style.display = 'block';
+        } else {
+          document.getElementById('loadMoreBtn').style.display = 'none';
+        }
+        editOffset += items.length;
       }, function(error) {
-        document.getElementById('editList').innerHTML = '<div class="empty">Error: ' + error.message + '</div>';
+        var spinnerEl = document.getElementById('editLoadMoreSpinner');
+        if (spinnerEl) spinnerEl.remove();
+        if (reset) list.innerHTML = '<div class="empty">Error: ' + error.message + '</div>';
+        else { /* show error in message */ }
       });
     }
 
-    function renderEditList(items) {
-      var list = document.getElementById('editList');
-      list.innerHTML = '';
-      if (!items.length) {
-        list.innerHTML = '<div class="empty">No matching queries on this tab.</div>';
-        return;
-      }
+    function renderEditListItems(items, list, reset) {
+      if (!items.length) return;
       items.forEach(function(item) {
         var badgeClass = item.status === 'Pending' ? 'pending' : (item.status === 'Assign to Dev' ? 'assign' : 'resolved');
         var el = document.createElement('div');
         el.className = 'item';
+        el.dataset.row = item.row;
+        el.dataset.status = item.status;
         el.innerHTML =
-          '<div class="text"></div>' +
-          '<div class="meta">' +
-            '<span class="badge ' + badgeClass + '"></span>' +
-            '<span class="dateTime"></span>' +
+          '<div class="text"></div><div class="meta">' +
+          '<span class="badge ' + badgeClass + '"></span>' +
+          '<span class="dateTime"></span>' +
+          (item.resolvedBy ? '<span>By: ' + item.resolvedBy + '</span>' : '') +
           '</div>';
         el.querySelector('.text').textContent = item.text;
         el.querySelector('.badge').textContent = item.status;
@@ -863,8 +1070,11 @@
           el.classList.add('selected');
           editSelectedRow = item.row;
           document.getElementById('editText').value = item.text;
+          document.getElementById('editStatus').value = item.status === 'Pending' ? 'pending' : (item.status === 'Assign to Dev' ? 'assign' : 'out');
+          // store original for undo
+          editUndoData = { row: item.row, text: item.text, status: item.status };
           document.getElementById('editPanel').style.display = 'block';
-          document.getElementById('editMsg').textContent = '';
+          document.getElementById('undoEditBtn').disabled = true;
           checkEditReady();
         });
         list.appendChild(el);
@@ -873,11 +1083,14 @@
 
     function resetEditSelection() {
       editSelectedRow = null;
+      editUndoData = null;
       document.getElementById('editPanel').style.display = 'none';
       document.getElementById('editMsg').textContent = '';
+      document.getElementById('undoEditBtn').disabled = true;
     }
 
     document.getElementById('editText').addEventListener('input', checkEditReady);
+    document.getElementById('editStatus').addEventListener('change', checkEditReady);
 
     function checkEditReady() {
       var text = document.getElementById('editText').value.trim();
@@ -886,21 +1099,187 @@
 
     document.getElementById('editSaveBtn').addEventListener('click', function() {
       var text = document.getElementById('editText').value.trim();
+      var newStatus = document.getElementById('editStatus').value;
       if (!editSelectedRow || !text) return;
-
       document.getElementById('editSaveBtn').disabled = true;
       document.getElementById('editMsg').textContent = 'Saving...';
 
+      // First update text
       callApi('updateQueryText', {
-        sheetName: editCurrentSheetName,
+        sheetName: editCurrentSheet,
         rowNumber: editSelectedRow,
         newText: text
       }, function(result) {
-        document.getElementById('editMsg').textContent = '✅ ' + result.message;
-        loadEditQueries();
+        // Then update status
+        callApi('updateQueryStatus', {
+          sheetName: editCurrentSheet,
+          rowNumber: editSelectedRow,
+          newStatus: newStatus
+        }, function(result2) {
+          document.getElementById('editMsg').textContent = '✅ ' + result.message + ' | ' + result2.message;
+          document.getElementById('undoEditBtn').disabled = false;
+          loadEditQueries(true);
+        }, function(error) {
+          document.getElementById('editMsg').textContent = 'Status update error: ' + error.message;
+          document.getElementById('editSaveBtn').disabled = false;
+        });
       }, function(error) {
-        document.getElementById('editMsg').textContent = 'Error: ' + error.message;
+        document.getElementById('editMsg').textContent = 'Text update error: ' + error.message;
         document.getElementById('editSaveBtn').disabled = false;
+      });
+    });
+
+    document.getElementById('undoEditBtn').addEventListener('click', function() {
+      if (!editUndoData) return;
+      document.getElementById('undoEditBtn').disabled = true;
+      document.getElementById('editMsg').textContent = 'Undoing edit...';
+      // Restore original text and status
+      callApi('updateQueryText', {
+        sheetName: editCurrentSheet,
+        rowNumber: editUndoData.row,
+        newText: editUndoData.text
+      }, function(result) {
+        var oldStatus = editUndoData.status === 'Pending' ? 'pending' : (editUndoData.status === 'Assign to Dev' ? 'assign' : 'out');
+        callApi('updateQueryStatus', {
+          sheetName: editCurrentSheet,
+          rowNumber: editUndoData.row,
+          newStatus: oldStatus
+        }, function(result2) {
+          document.getElementById('editMsg').textContent = '✅ Undo successful.';
+          editUndoData = null;
+          document.getElementById('undoEditBtn').disabled = true;
+          loadEditQueries(true);
+        }, function(error) {
+          document.getElementById('editMsg').textContent = 'Undo status error: ' + error.message;
+          document.getElementById('undoEditBtn').disabled = false;
+        });
+      }, function(error) {
+        document.getElementById('editMsg').textContent = 'Undo text error: ' + error.message;
+        document.getElementById('undoEditBtn').disabled = false;
+      });
+    });
+
+    /* ================= DASHBOARD TAB ================= */
+    var dashLoadedOnce = false;
+    var dashChart1 = null;
+    var dashChart2 = null;
+
+    function initDashboardTab() {
+      dashLoadedOnce = true;
+      var sheetSel = document.getElementById('dashSheetSelect');
+      if (cachedSheetNames) {
+        populateSheetDropdowns(cachedSheetNames);
+      }
+      if (!cachedSheetNames) {
+        callApi('getAllSheetNames', {}, function(sheets) {
+          cachedSheetNames = sheets;
+          populateSheetDropdowns(sheets);
+          loadDashboard();
+        });
+      } else {
+        loadDashboard();
+      }
+      document.getElementById('dashRefreshBtn').addEventListener('click', loadDashboard);
+      document.getElementById('dashSheetSelect').addEventListener('change', loadDashboard);
+    }
+
+    function loadDashboard() {
+      var sheet = document.getElementById('dashSheetSelect').value;
+      if (!sheet) return;
+      document.getElementById('dashLoading').style.display = 'block';
+      document.getElementById('dashContent').style.display = 'none';
+
+      callApi('getDailyCounts', { sheetName: sheet }, function(dailyData) {
+        // Also get overall stats for that sheet
+        callApi('getOverallStats', { sheetName: sheet }, function(overall) {
+          document.getElementById('dashLoading').style.display = 'none';
+          document.getElementById('dashContent').style.display = 'block';
+          renderCharts(dailyData, overall);
+        }, function(error) {
+          document.getElementById('dashLoading').style.display = 'none';
+          document.getElementById('dashContent').innerHTML = '<div class="empty">Error: ' + error.message + '</div>';
+        });
+      }, function(error) {
+        document.getElementById('dashLoading').style.display = 'none';
+        document.getElementById('dashContent').innerHTML = '<div class="empty">Error: ' + error.message + '</div>';
+      });
+    }
+
+    function renderCharts(dailyData, overall) {
+      if (dashChart1) { dashChart1.destroy(); dashChart1 = null; }
+      if (dashChart2) { dashChart2.destroy(); dashChart2 = null; }
+
+      // Daily bar chart
+      var dates = dailyData.map(function(d) { return d.date; });
+      var pending = dailyData.map(function(d) { return d.pending || 0; });
+      var assign = dailyData.map(function(d) { return d.assign || 0; });
+      var out = dailyData.map(function(d) { return d.out || 0; });
+
+      var ctx1 = document.getElementById('dailyChart').getContext('2d');
+      dashChart1 = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: dates,
+          datasets: [
+            { label: 'Pending', data: pending, backgroundColor: '#fdba74' },
+            { label: 'Assigned', data: assign, backgroundColor: '#93c5fd' },
+            { label: 'Resolved', data: out, backgroundColor: '#6ee7b7' }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: { x: { stacked: true }, y: { stacked: true } }
+        }
+      });
+
+      // Status pie chart
+      var ctx2 = document.getElementById('statusChart').getContext('2d');
+      dashChart2 = new Chart(ctx2, {
+        type: 'pie',
+        data: {
+          labels: ['Pending', 'Assigned', 'Resolved'],
+          datasets: [{
+            data: [overall.pending || 0, overall.assign || 0, overall.out || 0],
+            backgroundColor: ['#fdba74', '#93c5fd', '#6ee7b7']
+          }]
+        },
+        options: { responsive: true }
+      });
+
+      document.getElementById('dashPending').textContent = overall.pending || 0;
+      document.getElementById('dashAssigned').textContent = overall.assign || 0;
+      document.getElementById('dashResolved').textContent = overall.out || 0;
+    }
+
+    /* ================= ADMIN TAB ================= */
+    function loadAdminPanel() {
+      if (cachedNames) {
+        document.getElementById('adminNames').value = cachedNames.join('\n');
+      } else {
+        callApi('getNames', {}, function(names) {
+          cachedNames = names;
+          document.getElementById('adminNames').value = names.join('\n');
+        });
+      }
+    }
+
+    document.getElementById('saveNamesBtn').addEventListener('click', function() {
+      var text = document.getElementById('adminNames').value;
+      var names = text.split('\n').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+      if (!names.length) {
+        document.getElementById('adminMsg').textContent = 'Please enter at least one name.';
+        return;
+      }
+      document.getElementById('saveNamesBtn').disabled = true;
+      document.getElementById('adminMsg').textContent = 'Saving...';
+      callApi('saveNamesList', { names: names }, function(result) {
+        document.getElementById('adminMsg').textContent = '✅ ' + result.message;
+        cachedNames = names;
+        populateNameDropdowns(names);
+        document.getElementById('saveNamesBtn').disabled = false;
+      }, function(error) {
+        document.getElementById('adminMsg').textContent = 'Error: ' + error.message;
+        document.getElementById('saveNamesBtn').disabled = false;
       });
     });
 
@@ -910,13 +1289,8 @@
         e.preventDefault();
         var activeTab = document.querySelector('.tab-btn.active').getAttribute('data-tab');
         if (activeTab === 'new') attemptSave();
-      } else if (e.key === 'Escape') {
-        // Since this is not inside a dialog, we might just close the tab
-        // or do nothing. You can remove this line if you want.
-        // google.script.host.close(); // not applicable in web app
       }
     });
-
-</script>
+  </script>
 </body>
 </html>
