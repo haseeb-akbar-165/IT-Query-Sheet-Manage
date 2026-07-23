@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      color: #1f2430;
+      display: flex;
+      min-height: 100vh;
+      background: #f7f9fc;
+    }
+
+    /* LEFT BRAND PANEL */
+    .brand {
+      flex: 0 0 34%;
+      background: radial-gradient(circle at 20% 15%, #7c7ff2 0%, #4f46e5 55%, #4338ca 100%);
+      color: white;
+      padding: 50px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .brand::before {
+      content: "";
+      position: absolute;
+      width: 480px; height: 480px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      top: -180px; right: -160px;
+    }
+    .brand::after {
+      content: "";
+      position: absolute;
+      width: 320px; height: 320px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+      bottom: -120px; left: -100px;
+    }
+    .brand .icon {
+      width: 60px; height: 60px; border-radius: 18px;
+      background: rgba(255,255,255,0.16);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      backdrop-filter: blur(4px);
+      position: relative; z-index: 1;
+    }
+    .brand h1 {
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin: 24px 0 10px;
+      letter-spacing: -0.5px;
+      position: relative; z-index: 1;
+    }
+    .brand p.sub {
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.82);
+      margin: 0;
+      max-width: 300px;
+      position: relative; z-index: 1;
+    }
+    .brand .meta {
+      position: relative; z-index: 1;
+      font-size: 13px;
+      color: rgba(255,255,255,0.65);
+      border-top: 1px solid rgba(255,255,255,0.18);
+      padding-top: 18px;
+    }
+    .brand .meta strong {
+      display: block;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+    .stats {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 22px;
+      position: relative; z-index: 1;
+    }
+    .stat {
+      flex: 1;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 14px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+    .stat span {
+      display: block;
+      font-size: 24px;
+      font-weight: 700;
+      color: white;
+      line-height: 1;
+    }
+    .stat label {
+      display: block;
+      margin: 6px 0 0;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: rgba(255,255,255,0.7);
+      font-weight: 600;
+    }
+    .shortcuts {
+      margin-top: 12px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.55);
+    }
+
+    /* RIGHT PANEL */
+    .form-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 36px 44px;
+      overflow-y: auto;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+      border-bottom: 1.5px solid #e2e5ee;
+    }
+    .tab-btn {
+      padding: 12px 20px;
+      border: none;
+      background: none;
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #8a8fa3;
+      cursor: pointer;
+      border-bottom: 2.5px solid transparent;
+      margin-bottom: -1.5px;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .tab-btn:hover { color: #4b5063; }
+    .tab-btn.active { color: #4f46e5; border-color: #4f46e5; }
+
+    .view { display: none; max-width: 620px; }
+    .view.active { display: block; }
+
+    label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #5b6072;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      margin-top: 26px;
+    }
+    label:first-of-type { margin-top: 0; }
+    textarea, select {
+      width: 100%;
+      padding: 16px 16px;
+      font-size: 16px;
+      font-family: 'Inter', Arial, sans-serif;
+      border: 1.5px solid #e2e5ee;
+      border-radius: 14px;
+      background: #ffffff;
+      color: #1f2430;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      outline: none;
+    }
+    textarea {
+      height: 150px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+    textarea:focus, select:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 4px rgba(99,102,241,0.12);
+    }
+    textarea::placeholder { color: #b3b7c6; }
+    .status-options {
+      display: flex;
+      gap: 12px;
+    }
+    .status-options button {
+      flex: 1;
+      padding: 18px 8px;
+      border: 1.5px solid #e2e5ee;
+      border-radius: 14px;
+      background: #ffffff;
+      color: #4b5063;
+      cursor: pointer;
+      font-size: 14.5px;
+      font-weight: 600;
+      font-family: 'Inter', Arial, sans-serif;
+      transition: all 0.15s ease;
+    }
+    .status-options button:hover { border-color: #c7cbe0; background: #f9fafc; }
+    .status-options button.selected.pending { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
+    .status-options button.selected.assign  { background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; }
+    .status-options button.selected.out     { background: #ecfdf5; color: #047857; border-color: #6ee7b7; }
+    #step2 { display: none; }
+    #saveBtn {
+      margin-top: 34px;
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 16.5px;
+      font-weight: 600;
+      font-family: 'Inter', Arial, sans-serif;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(79,70,229,0.28);
+      transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    }
+    #saveBtn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(79,70,229,0.35); }
+    #saveBtn:disabled { background: #d3d5e0; box-shadow: none; cursor: not-allowed; }
+    #undoBtn {
+      display: none;
+      margin-top: 12px;
+      width: 100%;
+      padding: 12px;
+      background: #fff5f5;
+      color: #c53030;
+      border: 1.5px solid #fed7d7;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'Inter', Arial, sans-serif;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    #undoBtn:hover:not(:disabled) { background: #ffe8e8; }
+    #undoBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+    #msg {
+      margin-top: 16px;
+      font-size: 13.5px;
+      color: #6b7085;
+      text-align: center;
+      min-height: 16px;
+    }
+
+    /* Resolve tab specifics */
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .toolbar label { margin: 0; }
+    .toolbar select { width: auto; padding: 10px 14px; font-size: 14.5px; }
+    #refreshBtn {
+      padding: 10px 16px;
+      border: 1.5px solid #e2e5ee;
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #4b5063;
+      font-family: 'Inter', Arial, sans-serif;
+    }
+    #refreshBtn:hover { background: #f9fafc; }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .item {
+      border: 1.5px solid #e2e5ee;
+      border-radius: 14px;
+      padding: 13px 15px;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .item:hover { border-color: #c7cbe0; }
+    .item.selected { border-color: #6366f1; background: #eef0ff; }
+    .item .text { font-size: 14.5px; line-height: 1.45; margin-bottom: 6px; }
+    .item .meta { font-size: 12px; color: #6b7085; display: flex; gap: 10px; align-items: center; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .badge.pending { background: #fff7ed; color: #c2410c; }
+    .badge.assign { background: #eff6ff; color: #1d4ed8; }
+    .badge.resolved { background: #ecfdf5; color: #047857; }
+    .empty { color: #6b7085; font-size: 14px; padding: 24px 0; text-align: center; }
+    .resolve-panel { display: none; margin-top: 22px; }
+    #resolveBtn {
+      margin-top: 18px;
+      padding: 14px 26px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Inter', Arial, sans-serif;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(5,150,105,0.25);
+    }
+    #resolveBtn:disabled { background: #d3d5e0; box-shadow: none; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div class="brand">
+    <div>
+      <div class="icon">🏥</div>
+      <h1>IT Query Entry</h1>
+      <p class="sub">Log and resolve HIMS support queries across OPD, HR, Nursing, Radiology, IPD, Pharmacy &amp; Finance — in a few taps.</p>
+    </div>
+    <div class="meta">
+      <div class="stats">
+        <div class="stat"><span id="statPending">0</span><label>Pending</label></div>
+        <div class="stat"><span id="statAssigned">0</span><label>Assigned</label></div>
+        <div class="stat"><span id="statOut">0</span><label>Resolved</label></div>
+      </div>
+      <strong id="todayLabel">Today</strong>
+      <span id="targetSheetLabel">Detecting tab…</span>
+      <div class="shortcuts">⌘/Ctrl + Enter to save &nbsp;·&nbsp; Esc to close</div>
+    </div>
+  </div>
+
+  <div class="form-panel">
+    <div class="tabs">
+      <button type="button" class="tab-btn active" data-tab="new">New Query</button>
+      <button type="button" class="tab-btn" data-tab="resolve">Resolve Existing</button>
+      <button type="button" class="tab-btn" data-tab="edit">Edit Existing</button>
+    </div>
+
+    <!-- ===================== NEW QUERY TAB ===================== -->
+    <div id="view-new" class="view active">
+      <div id="step1">
+        <label for="queryText">Query</label>
+        <textarea id="queryText" placeholder="Describe the query..."></textarea>
+
+        <label>Status</label>
+        <div class="status-options">
+          <button type="button" class="pending" data-value="pending">🕓 Pending</button>
+          <button type="button" class="assign" data-value="assign">🛠️ Assign to Dev</button>
+          <button type="button" class="out" data-value="out">✅ Query Out</button>
+        </div>
+      </div>
+
+      <div id="step2">
+        <label for="nameSelect">Who did this?</label>
+        <select id="nameSelect"></select>
+      </div>
+
+      <button id="saveBtn" disabled>Save Entry</button>
+      <button id="undoBtn" type="button">↩ Undo last entry</button>
+      <div id="msg"></div>
+    </div>
+
+    <!-- ===================== RESOLVE TAB ===================== -->
+    <div id="view-resolve" class="view">
+      <div class="toolbar">
+        <label for="sheetSelect">Tab</label>
+        <select id="sheetSelect"></select>
+        <label for="resolveDateSelect">Date</label>
+        <select id="resolveDateSelect"><option value="">All dates</option></select>
+        <button id="refreshBtn" type="button">↻ Refresh</button>
+      </div>
+
+      <div id="list" class="list"></div>
+
+      <div id="resolvePanel" class="resolve-panel">
+        <label for="resolveNameSelect">Resolved by</label>
+        <select id="resolveNameSelect"></select>
+        <button id="resolveBtn" disabled>Mark as Query Out</button>
+        <div id="resolveMsg"></div>
+      </div>
+    </div>
+
+    <!-- ===================== EDIT TAB ===================== -->
+    <div id="view-edit" class="view">
+      <div class="toolbar">
+        <label for="editSheetSelect">Tab</label>
+        <select id="editSheetSelect"></select>
+        <label for="editDateSelect">Date</label>
+        <select id="editDateSelect"><option value="">All dates</option></select>
+        <button id="editRefreshBtn" type="button">↻ Refresh</button>
+      </div>
+
+      <label for="editSearch" style="margin-top:0;">Search</label>
+      <input type="text" id="editSearch" placeholder="Type to filter queries on this tab..."
+        style="width:100%; padding:14px 16px; font-size:15px; font-family:'Inter',Arial,sans-serif; border:1.5px solid #e2e5ee; border-radius:12px; outline:none; margin-bottom:16px;">
+
+      <div id="editList" class="list"></div>
+
+      <div id="editPanel" class="resolve-panel">
+        <label for="editText">Query text <span style="font-weight:400; text-transform:none; color:#9aa0b3;">(date &amp; time on this row won't change)</span></label>
+        <textarea id="editText" style="height:120px;"></textarea>
+        <button id="editSaveBtn" disabled>Save Changes</button>
+        <div id="editMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ---------- API communication ---------- */
+    // *** CHANGE THIS TO YOUR WEB APP URL AFTER DEPLOYMENT ***
+    var API_BASE = 'https://script.google.com/macros/s/AKfycbxB2xNW_xBf26hmJgS73cKmne73aA6atPjwE1U-0bIdg_6nuamO-IalqN7veIDxIYRUdg/exec';
+
+    function callApi(action, data, success, error) {
+        var payload = { action: action };
+        for (var key in data) {
+            if (data.hasOwnProperty(key)) {
+                payload[key] = data[key];
+            }
+        }
+        fetch(API_BASE, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                success(result.data);
+            } else {
+                error(new Error(result.error));
+            }
+        })
+        .catch(err => error(err));
+    }
+
+    /* ---------- Tab switching ---------- */
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById('view-' + btn.getAttribute('data-tab')).classList.add('active');
+        if (btn.getAttribute('data-tab') === 'resolve' && !resolveLoadedOnce) {
+          initResolveTab();
+        }
+        if (btn.getAttribute('data-tab') === 'edit' && !editLoadedOnce) {
+          initEditTab();
+        }
+      });
+    });
+
+    document.getElementById('todayLabel').textContent =
+      new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    /* ================= NEW QUERY TAB LOGIC ================= */
+    var selectedStatus = null;
+
+    document.querySelectorAll('.status-options button').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.status-options button').forEach(function(b) {
+          b.classList.remove('selected');
+        });
+        btn.classList.add('selected');
+        selectedStatus = btn.getAttribute('data-value');
+        document.getElementById('step2').style.display = (selectedStatus === 'out') ? 'block' : 'none';
+        checkReady();
+      });
+    });
+
+    document.getElementById('queryText').addEventListener('input', checkReady);
+    document.getElementById('nameSelect').addEventListener('change', checkReady);
+
+    function checkReady() {
+      var text = document.getElementById('queryText').value.trim();
+      if (!text || !selectedStatus) {
+        document.getElementById('saveBtn').disabled = true;
+        return;
+      }
+      if (selectedStatus === 'out') {
+        var name = document.getElementById('nameSelect').value;
+        document.getElementById('saveBtn').disabled = !name;
+      } else {
+        document.getElementById('saveBtn').disabled = false;
+      }
+    }
+
+    // Load names into New Query dropdown
+    callApi('getNames', {}, function(names) {
+      var sel = document.getElementById('nameSelect');
+      var placeholder = document.createElement('option');
+      placeholder.textContent = 'Select name...';
+      placeholder.value = '';
+      sel.appendChild(placeholder);
+      names.forEach(function(n) {
+        var opt = document.createElement('option');
+        opt.value = n;
+        opt.textContent = n;
+        sel.appendChild(opt);
+      });
+    }, function(error) {
+      console.error('Failed to load names:', error);
+      document.getElementById('msg').textContent = 'Error loading names: ' + error.message;
+    });
+
+    // Load today's running totals on open
+    callApi('getTodayStats', {}, function(stats) {
+      updateStats(stats);
+    }, function(error) {
+      console.error('Failed to load stats:', error);
+    });
+
+    // Show which tab entries will actually save to
+    callApi('getTargetSheetInfo', {}, function(info) {
+      var label = document.getElementById('targetSheetLabel');
+      if (info.found) {
+        label.textContent = 'Saving to tab: "' + info.name + '"';
+      } else {
+        label.innerHTML = '⚠ No tab found for "' + info.name + '" — create it to enable saving.';
+        label.style.color = '#fecaca';
+      }
+    }, function(error) {
+      console.error('Failed to get target sheet info:', error);
+    });
+
+    var lastSavedRow = null;
+
+    document.getElementById('saveBtn').addEventListener('click', attemptSave);
+
+    function attemptSave() {
+      if (document.getElementById('saveBtn').disabled) return;
+      var text = document.getElementById('queryText').value.trim();
+
+      document.getElementById('saveBtn').disabled = true;
+      document.getElementById('msg').textContent = 'Checking...';
+
+      // Check duplicate
+      callApi('checkDuplicateToday', { queryText: text }, function(isDuplicate) {
+        if (isDuplicate) {
+          var proceed = confirm('This query looks like it was already logged today. Save it again anyway?');
+          if (!proceed) {
+            document.getElementById('msg').textContent = '';
+            document.getElementById('saveBtn').disabled = false;
+            return;
+          }
+        }
+        doSave();
+      }, function(error) {
+        // If duplicate check fails, proceed anyway
+        console.warn('Duplicate check failed, saving anyway:', error);
+        doSave();
+      });
+    }
+
+    function doSave() {
+      var data = {
+        queryText: document.getElementById('queryText').value.trim(),
+        status: selectedStatus,
+        name: document.getElementById('nameSelect').value
+      };
+      document.getElementById('msg').textContent = 'Saving...';
+
+      callApi('saveQueryEntry', data, function(result) {
+        document.getElementById('msg').textContent = '✅ ' + result.message + ' — ready for next entry';
+        lastSavedRow = result.row;
+        updateStats(result.stats);
+        document.getElementById('undoBtn').style.display = 'block';
+        document.getElementById('undoBtn').disabled = false;
+        resetForm();
+      }, function(error) {
+        document.getElementById('msg').textContent = 'Error: ' + error.message;
+        document.getElementById('saveBtn').disabled = false;
+      });
+    }
+
+    document.getElementById('undoBtn').addEventListener('click', function() {
+      if (!lastSavedRow) return;
+      document.getElementById('undoBtn').disabled = true;
+      document.getElementById('msg').textContent = 'Undoing...';
+
+      callApi('undoLastEntry', { rowNumber: lastSavedRow }, function(stats) {
+        document.getElementById('msg').textContent = 'Last entry removed.';
+        updateStats(stats);
+        document.getElementById('undoBtn').style.display = 'none';
+        lastSavedRow = null;
+      }, function(error) {
+        document.getElementById('msg').textContent = 'Undo failed: ' + error.message;
+        document.getElementById('undoBtn').disabled = false;
+      });
+    });
+
+    function updateStats(stats) {
+      document.getElementById('statPending').textContent = stats.pending;
+      document.getElementById('statAssigned').textContent = stats.assigned;
+      document.getElementById('statOut').textContent = stats.out;
+    }
+
+    function resetForm() {
+      document.getElementById('queryText').value = '';
+      document.getElementById('nameSelect').value = '';
+      selectedStatus = null;
+      document.querySelectorAll('.status-options button').forEach(function(b) {
+        b.classList.remove('selected');
+      });
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('saveBtn').disabled = true;
+      document.getElementById('queryText').focus();
+    }
+
+    /* ================= RESOLVE TAB LOGIC ================= */
+    var resolveLoadedOnce = false;
+    var selectedRow = null;
+    var currentSheetName = null;
+
+    function initResolveTab() {
+      resolveLoadedOnce = true;
+
+      callApi('getAllSheetNames', {}, function(names) {
+        var sel = document.getElementById('sheetSelect');
+        names.forEach(function(n) {
+          var opt = document.createElement('option');
+          opt.value = n;
+          opt.textContent = n;
+          sel.appendChild(opt);
+        });
+        if (names.length) {
+          currentSheetName = names[0];
+          loadResolveDates();
+          loadOpenQueries();
+        }
+      }, function(error) {
+        console.error('Failed to load sheet names:', error);
+      });
+
+      callApi('getNames', {}, function(names) {
+        var sel = document.getElementById('resolveNameSelect');
+        var placeholder = document.createElement('option');
+        placeholder.textContent = 'Select name...';
+        placeholder.value = '';
+        sel.appendChild(placeholder);
+        names.forEach(function(n) {
+          var opt = document.createElement('option');
+          opt.value = n;
+          opt.textContent = n;
+          sel.appendChild(opt);
+        });
+      }, function(error) {
+        console.error('Failed to load names:', error);
+      });
+    }
+
+    document.getElementById('sheetSelect').addEventListener('change', function() {
+      currentSheetName = this.value;
+      document.getElementById('resolveDateSelect').value = '';
+      loadResolveDates();
+      loadOpenQueries();
+    });
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+      loadResolveDates();
+      loadOpenQueries();
+    });
+    document.getElementById('resolveDateSelect').addEventListener('change', loadOpenQueries);
+    document.getElementById('resolveNameSelect').addEventListener('change', checkResolveReady);
+
+    function loadResolveDates() {
+      var sel = document.getElementById('resolveDateSelect');
+      callApi('getDatesForSheet', { sheetName: currentSheetName }, function(dates) {
+        var current = sel.value;
+        sel.innerHTML = '<option value="">All dates</option>';
+        dates.forEach(function(d) {
+          var opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = d;
+          sel.appendChild(opt);
+        });
+        if (dates.indexOf(current) !== -1) sel.value = current;
+      }, function(error) {
+        console.error('Failed to load dates:', error);
+      });
+    }
+
+    function loadOpenQueries() {
+      document.getElementById('list').innerHTML = '<div class="empty">Loading…</div>';
+      resetResolveSelection();
+      var dateFilter = document.getElementById('resolveDateSelect').value;
+      callApi('getOpenQueries', { sheetName: currentSheetName, dateFilter: dateFilter }, function(items) {
+        renderList(items);
+      }, function(error) {
+        document.getElementById('list').innerHTML = '<div class="empty">Error: ' + error.message + '</div>';
+      });
+    }
+
+    function renderList(items) {
+      var list = document.getElementById('list');
+      list.innerHTML = '';
+      if (!items.length) {
+        list.innerHTML = '<div class="empty">No open Pending / Assign-to-Dev queries on this tab 🎉</div>';
+        return;
+      }
+      items.forEach(function(item) {
+        var badgeClass = item.status === 'Pending' ? 'pending' : 'assign';
+        var el = document.createElement('div');
+        el.className = 'item';
+        el.innerHTML =
+          '<div class="text"></div>' +
+          '<div class="meta">' +
+            '<span class="badge ' + badgeClass + '"></span>' +
+            '<span class="dateTime"></span>' +
+          '</div>';
+        el.querySelector('.text').textContent = item.text;
+        el.querySelector('.badge').textContent = item.status;
+        el.querySelector('.dateTime').textContent = item.date + (item.time ? '  ·  ' + item.time : '');
+        el.addEventListener('click', function() {
+          document.querySelectorAll('#list .item').forEach(function(i) { i.classList.remove('selected'); });
+          el.classList.add('selected');
+          selectedRow = item.row;
+          document.getElementById('resolvePanel').style.display = 'block';
+          checkResolveReady();
+        });
+        list.appendChild(el);
+      });
+    }
+
+    function resetResolveSelection() {
+      selectedRow = null;
+      document.getElementById('resolvePanel').style.display = 'none';
+      document.getElementById('resolveMsg').textContent = '';
+    }
+
+    function checkResolveReady() {
+      var name = document.getElementById('resolveNameSelect').value;
+      document.getElementById('resolveBtn').disabled = !(selectedRow && name);
+    }
+
+    document.getElementById('resolveBtn').addEventListener('click', function() {
+      var name = document.getElementById('resolveNameSelect').value;
+      if (!selectedRow || !name) return;
+
+      document.getElementById('resolveBtn').disabled = true;
+      document.getElementById('resolveMsg').textContent = 'Saving...';
+
+      callApi('resolveQueryEntry', {
+        sheetName: currentSheetName,
+        rowNumber: selectedRow,
+        name: name
+      }, function(result) {
+        document.getElementById('resolveMsg').textContent = '✅ ' + result.message;
+        loadOpenQueries();
+        callApi('getTodayStats', {}, function(stats) {
+          updateStats(stats);
+        }, function() {});
+      }, function(error) {
+        document.getElementById('resolveMsg').textContent = 'Error: ' + error.message;
+        document.getElementById('resolveBtn').disabled = false;
+      });
+    });
+
+    /* ================= EDIT TAB LOGIC ================= */
+    var editLoadedOnce = false;
+    var editSelectedRow = null;
+    var editCurrentSheetName = null;
+    var editSearchTimer = null;
+
+    function initEditTab() {
+      editLoadedOnce = true;
+
+      callApi('getAllSheetNames', {}, function(names) {
+        var sel = document.getElementById('editSheetSelect');
+        names.forEach(function(n) {
+          var opt = document.createElement('option');
+          opt.value = n;
+          opt.textContent = n;
+          sel.appendChild(opt);
+        });
+        if (names.length) {
+          editCurrentSheetName = names[0];
+          loadEditDates();
+          loadEditQueries();
+        }
+      }, function(error) {
+        console.error('Failed to load sheet names:', error);
+      });
+    }
+
+    document.getElementById('editSheetSelect').addEventListener('change', function() {
+      editCurrentSheetName = this.value;
+      document.getElementById('editDateSelect').value = '';
+      loadEditDates();
+      loadEditQueries();
+    });
+    document.getElementById('editRefreshBtn').addEventListener('click', function() {
+      loadEditDates();
+      loadEditQueries();
+    });
+    document.getElementById('editDateSelect').addEventListener('change', loadEditQueries);
+
+    function loadEditDates() {
+      var sel = document.getElementById('editDateSelect');
+      callApi('getDatesForSheet', { sheetName: editCurrentSheetName }, function(dates) {
+        var current = sel.value;
+        sel.innerHTML = '<option value="">All dates</option>';
+        dates.forEach(function(d) {
+          var opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = d;
+          sel.appendChild(opt);
+        });
+        if (dates.indexOf(current) !== -1) sel.value = current;
+      }, function(error) {
+        console.error('Failed to load dates:', error);
+      });
+    }
+
+    document.getElementById('editSearch').addEventListener('input', function() {
+      clearTimeout(editSearchTimer);
+      editSearchTimer = setTimeout(loadEditQueries, 300);
+    });
+
+    function loadEditQueries() {
+      document.getElementById('editList').innerHTML = '<div class="empty">Loading…</div>';
+      resetEditSelection();
+      var searchText = document.getElementById('editSearch').value;
+      var dateFilter = document.getElementById('editDateSelect').value;
+      callApi('getQueriesForEdit', {
+        sheetName: editCurrentSheetName,
+        searchText: searchText,
+        dateFilter: dateFilter
+      }, function(items) {
+        renderEditList(items);
+      }, function(error) {
+        document.getElementById('editList').innerHTML = '<div class="empty">Error: ' + error.message + '</div>';
+      });
+    }
+
+    function renderEditList(items) {
+      var list = document.getElementById('editList');
+      list.innerHTML = '';
+      if (!items.length) {
+        list.innerHTML = '<div class="empty">No matching queries on this tab.</div>';
+        return;
+      }
+      items.forEach(function(item) {
+        var badgeClass = item.status === 'Pending' ? 'pending' : (item.status === 'Assign to Dev' ? 'assign' : 'resolved');
+        var el = document.createElement('div');
+        el.className = 'item';
+        el.innerHTML =
+          '<div class="text"></div>' +
+          '<div class="meta">' +
+            '<span class="badge ' + badgeClass + '"></span>' +
+            '<span class="dateTime"></span>' +
+          '</div>';
+        el.querySelector('.text').textContent = item.text;
+        el.querySelector('.badge').textContent = item.status;
+        el.querySelector('.dateTime').textContent = item.date + (item.time ? '  ·  ' + item.time : '');
+        el.addEventListener('click', function() {
+          document.querySelectorAll('#editList .item').forEach(function(i) { i.classList.remove('selected'); });
+          el.classList.add('selected');
+          editSelectedRow = item.row;
+          document.getElementById('editText').value = item.text;
+          document.getElementById('editPanel').style.display = 'block';
+          document.getElementById('editMsg').textContent = '';
+          checkEditReady();
+        });
+        list.appendChild(el);
+      });
+    }
+
+    function resetEditSelection() {
+      editSelectedRow = null;
+      document.getElementById('editPanel').style.display = 'none';
+      document.getElementById('editMsg').textContent = '';
+    }
+
+    document.getElementById('editText').addEventListener('input', checkEditReady);
+
+    function checkEditReady() {
+      var text = document.getElementById('editText').value.trim();
+      document.getElementById('editSaveBtn').disabled = !(editSelectedRow && text);
+    }
+
+    document.getElementById('editSaveBtn').addEventListener('click', function() {
+      var text = document.getElementById('editText').value.trim();
+      if (!editSelectedRow || !text) return;
+
+      document.getElementById('editSaveBtn').disabled = true;
+      document.getElementById('editMsg').textContent = 'Saving...';
+
+      callApi('updateQueryText', {
+        sheetName: editCurrentSheetName,
+        rowNumber: editSelectedRow,
+        newText: text
+      }, function(result) {
+        document.getElementById('editMsg').textContent = '✅ ' + result.message;
+        loadEditQueries();
+      }, function(error) {
+        document.getElementById('editMsg').textContent = 'Error: ' + error.message;
+        document.getElementById('editSaveBtn').disabled = false;
+      });
+    });
+
+    /* ================= Keyboard shortcuts ================= */
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        var activeTab = document.querySelector('.tab-btn.active').getAttribute('data-tab');
+        if (activeTab === 'new') attemptSave();
+      } else if (e.key === 'Escape') {
+        // Since this is not inside a dialog, we might just close the tab
+        // or do nothing. You can remove this line if you want.
+        // google.script.host.close(); // not applicable in web app
+      }
+    });
+
+</script>
+</body>
+</html>
