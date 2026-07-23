@@ -425,29 +425,20 @@
     var API_BASE = 'https://script.google.com/macros/s/AKfycbxB2xNW_xBf26hmJgS73cKmne73aA6atPjwE1U-0bIdg_6nuamO-IalqN7veIDxIYRUdg/exec';
 
     function callApi(action, data, success, error) {
-        var payload = { action: action };
-        for (var key in data) {
-            if (data.hasOwnProperty(key)) {
-                payload[key] = data[key];
-            }
+    var url = API_BASE + '?action=' + encodeURIComponent(action);
+    for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+            url += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
         }
-        fetch(API_BASE, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-        })
+    }
+    fetch(url)
         .then(response => response.json())
         .then(result => {
-            if (result.success) {
-                success(result.data);
-            } else {
-                error(new Error(result.error));
-            }
+            if (result.success) success(result.data);
+            else error(new Error(result.error));
         })
         .catch(err => error(err));
-    }
+}
 
     /* ---------- Tab switching ---------- */
     document.querySelectorAll('.tab-btn').forEach(function(btn) {
